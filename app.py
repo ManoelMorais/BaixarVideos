@@ -83,6 +83,7 @@ if url:
             # 2. Configuração Final de Download
             ydl_opts_dl: Dict[str, Any] = {
                 'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best' if format_option == "Vídeo (MP4)" else 'bestaudio/best',
+                'merge_output_format': 'mp4' if format_option == "Vídeo (MP4)" else None,
                 'outtmpl': 'download_temp_%(id)s.%(ext)s',
                 'progress_hooks': [progress_hook],
                 'cookiefile': current_cookie_file,
