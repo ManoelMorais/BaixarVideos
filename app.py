@@ -63,14 +63,22 @@ def clean_ansi(text: str) -> str:
 
 
 def progress_hook(d: Dict[str, Any]):
-    """Atualiza a barra de progresso do Streamlit."""
-    if d["status"] == "downloading":
-        p = clean_ansi(d.get("_percent_str", "0%"))
+    """Atualiza a barra de progresso com tratamento para downloads ultra-rápidos."""
+    if d['status'] == 'downloading':
+        # Remove cores ANSI e limpa a string
+        p = clean_ansi(d.get('_percent_str', '0%'))
         try:
-            p_float = float(p.replace("%", "").strip()) / 100
-            progress_bar.progress(p_float, text=f"Baixando: {p}")
-        except ValueError:
+            # Converte ' 95.5%' para 0.955
+            p_float = float(p.replace('%', '').strip()) / 100
+            
+            # Só atualiza a barra se houver mudança real ou se for o fim
+            # Isso evita "atropelar" a interface do Streamlit
+            progress_bar.progress(p_float, text=f"📥 Baixando... {p}")
+        except:
             pass
+    elif d['status'] == 'finished':
+        # Força a barra para 100% quando terminar o download
+        progress_bar.progress(1.0, text="✅ Download concluído! Convertendo...")
 
 
 # --- INTERFACE PRINCIPAL ---
