@@ -7,6 +7,13 @@ from typing import Any, Dict, cast
 # --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="Universal Downloader", page_icon="📥")
 
+if 'link_input' not in st.session_state:
+    st.session_state.link_input = ""
+
+def clear_text():
+    st.session_state.link_input = ""
+
+
 st.title("📥 Baixador de Vídeos Multi-plataforma")
 st.caption("Versão segura com isolamento de cookies e proteção de User-Agent.")
 
@@ -49,7 +56,13 @@ def progress_hook(d: Dict[str, Any]):
             pass
 
 # --- INTERFACE PRINCIPAL ---
-url = st.text_input("Cole o link aqui:", placeholder="https://...")
+url = st.text_input("Cole o link aqui:", value=st.session_state.link_input, key="link_input", placeholder="https://...")
+
+col1, col2 = st.columns([1, 5])
+with col1:
+    if st.button("Limpar"):
+        clear_text()
+        st.rerun()
 
 if url:
     # Seleciona o cookie correto antes de qualquer operação
