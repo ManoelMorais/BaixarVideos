@@ -56,13 +56,11 @@ def progress_hook(d: Dict[str, Any]):
             pass
 
 # --- INTERFACE PRINCIPAL ---
-url = st.text_input("Cole o link aqui:", value=st.session_state.link_input, key="link_input", placeholder="https://...")
+url = st.text_input("Cole o link aqui:", key="link_input", placeholder="https://...")
 
-col1, col2 = st.columns([1, 5])
-with col1:
-    if st.button("Limpar"):
-        clear_text()
-        st.rerun()
+if st.button("Limpar link"):
+    clear_text()
+    st.rerun()
 
 if url:
     # Seleciona o cookie correto antes de qualquer operação
