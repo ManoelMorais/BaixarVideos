@@ -1,0 +1,4 @@
+cookies.txt
+download_temp_*
+__pycache__/
+.env
