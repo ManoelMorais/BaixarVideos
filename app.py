@@ -10,7 +10,6 @@ st.set_page_config(page_title="Universal Downloader", page_icon="📥")
 if "link_input" not in st.session_state:
     st.session_state.link_input = ""
 
-
 def clear_text():
     st.session_state.link_input = ""
 
@@ -117,13 +116,14 @@ if url:
 
             # 2. Configuração Final de Download
             ydl_opts_dl: Dict[str, Any] = {
-                "format": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
+                "format": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" if format_option == "Vídeo (MP4)" else 'bestaudio/best',
                 "outtmpl": "download_temp_%(id)s.%(ext)s",
                 "progress_hooks": [progress_hook],
                 "cookiefile": current_cookie_file,
-                "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+                'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
                 "merge_output_format": "mp4",
                 "noplaylist": True,
+                'nopart': True,  # Resolve o erro de "Unable to rename file"
                 "postprocessor_args": [
                     "-vcodec",
                     "libx264",  # Força o codec H.264 (universal)
