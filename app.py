@@ -48,7 +48,8 @@ def get_video_info(url: str, cookie_file: str | None) -> Dict[str, Any]:
     """Busca apenas o título e a thumb de forma instantânea."""
     ydl_opts: Dict[str, Any] = {
         "cookiefile": cookie_file,
-        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+        'extractor_args': {'youtube': {'player_client': ['android', 'web']}},
+        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
         "extract_flat": True,
         "skip_download": True,
     }
@@ -117,11 +118,12 @@ if url:
             # 2. Configuração Final de Download
             ydl_opts_dl: Dict[str, Any] = {
                 "format": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" if format_option == "Vídeo (MP4)" else 'bestaudio/best',
+                "merge_output_format": "mp4",
                 "outtmpl": "download_temp_%(id)s.%(ext)s",
                 "progress_hooks": [progress_hook],
                 "cookiefile": current_cookie_file,
-                'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-                "merge_output_format": "mp4",
+                'extractor_args': {'youtube': {'player_client': ['android', 'web']}},
+                'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
                 "noplaylist": True,
                 'nopart': True,  # Resolve o erro de "Unable to rename file"
                 "postprocessor_args": [
