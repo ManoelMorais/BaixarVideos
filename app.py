@@ -48,7 +48,6 @@ def get_video_info(url: str, cookie_file: str | None) -> Dict[str, Any]:
     """Busca apenas o título e a thumb de forma instantânea."""
     ydl_opts: Dict[str, Any] = {
         "cookiefile": cookie_file,
-        'extractor_args': {'youtube': {'player_client': ['android', 'web']}},
         'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
         "extract_flat": True,
         "skip_download": True,
@@ -126,6 +125,11 @@ if url:
                 'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
                 "noplaylist": True,
                 'nopart': True,  # Resolve o erro de "Unable to rename file"
+                'nocheckcertificate': True,
+                'ignoreerrors': False,
+                'logtostderr': False,
+                'quiet': True,
+                'no_warnings': True,
                 "postprocessor_args": [
                     "-vcodec",
                     "libx264",  # Força o codec H.264 (universal)
