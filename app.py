@@ -35,11 +35,6 @@ def get_cookie_file(url: str) -> str | None:
         with open(cookie_path, "w", encoding="utf-8") as f:
             f.write(cookie_content.strip())
         return cookie_path
-
-    # 3. Fallback para arquivo local (testes no seu PC)
-    if os.path.exists("cookies.txt"):
-        return "cookies.txt"
-
     return "cookies.txt" if os.path.exists("cookies.txt") else None
 
 
@@ -90,93 +85,69 @@ if url:
     current_cookie_file = get_cookie_file(url)
 
     try:
-        # 1. Extração de Informações (Preview)
-        ydl_opts_info: Dict[str, Any] = {
-            "cookiefile": current_cookie_file,
-            "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-        }
+        with st.spinner("Buscando informações..."):
+            info = get_video_info(url, current_cookie_file)
+            
+        video_title = info.get("title", "Video_Sem_Nome")
+        thumbnail = info.get("thumbnail")
 
-        with yt_dlp.YoutubeDL(cast(Any, ydl_opts_info)) as ydl:
-            info = ydl.extract_info(url, download=False)
-            if info is None:
-                st.error("Não foi possível acessar o conteúdo.")
-                st.stop()
-
-            video_title = info.get("title", "Video_Sem_Nome")
-            thumbnail = info.get("thumbnail")
-
-            st.subheader(f"🎥 {video_title}")
-            if isinstance(thumbnail, str):
-                st.image(thumbnail, width=400)
+        st.subheader(f"🎥 {video_title}")
+        if isinstance(thumbnail, str):
+            st.image(thumbnail, width=400)
 
         format_option = st.selectbox("Formato:", ["Vídeo (MP4)", "Áudio (MP3)"])
 
         if st.button("🚀 Iniciar Download"):
-            progress_bar = st.progress(0, text="Preparando motor...")
+            progress_bar = st.progress(0, text="Conectando aos servidores...")
 
-            # 2. Configuração Final de Download
+            # 2. AJUSTE: Opções de Download para burlar o 403 Forbidden
             ydl_opts_dl: Dict[str, Any] = {
-                "format": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" if format_option == "Vídeo (MP4)" else 'bestaudio/best',
+                # Se for YouTube, tentamos um formato único 'best' para reduzir chances de erro 403
+                "format": "best[ext=mp4]/best" if "youtube.com" in url or "youtu.be" in url else "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
                 "merge_output_format": "mp4",
                 "outtmpl": "download_temp_%(id)s.%(ext)s",
                 "progress_hooks": [progress_hook],
                 "cookiefile": current_cookie_file,
-                'extractor_args': {'youtube': {'player_client': ['android', 'web']}},
-                'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
                 "noplaylist": True,
-                'nopart': True,  # Resolve o erro de "Unable to rename file"
-                'nocheckcertificate': True,
-                'ignoreerrors': False,
-                'logtostderr': False,
-                'quiet': True,
-                'no_warnings': True,
+                "nopart": True,
+                "nocheckcertificate": True,
+                # 3. CHAVE: Simular cliente Android (Geralmente ignora o erro 403)
+                "extractor_args": {"youtube": {"player_client": ["android"], "skip": ["hls", "dash"]}},
+                "user_agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36",
                 "postprocessor_args": [
-                    "-vcodec",
-                    "libx264",  # Força o codec H.264 (universal)
-                    "-acodec",
-                    "aac",  # Força áudio AAC (padrão Apple)
-                    "-pix_fmt",
-                    "yuv420p",  # Garante compatibilidade com telas de retina
+                    "-vcodec", "libx264", 
+                    "-acodec", "aac", 
+                    "-pix_fmt", "yuv420p"
                 ],
             }
 
             if format_option == "Áudio (MP3)":
-                ydl_opts_dl["postprocessors"] = [
-                    {
-                        "key": "FFmpegExtractAudio",
-                        "preferredcodec": "mp3",
-                        "preferredquality": "192",
-                    }
-                ]
+                ydl_opts_dl["format"] = "bestaudio/best"
+                ydl_opts_dl["postprocessors"] = [{
+                    "key": "FFmpegExtractAudio",
+                    "preferredcodec": "mp3",
+                    "preferredquality": "192",
+                }]
 
             with yt_dlp.YoutubeDL(cast(Any, ydl_opts_dl)) as ydl:
                 info_result = ydl.extract_info(url, download=True)
                 if info_result:
                     actual_filename = ydl.prepare_filename(info_result)
-
                     if format_option == "Áudio (MP3)":
                         actual_filename = os.path.splitext(actual_filename)[0] + ".mp3"
 
-                    # 3. Entrega do Arquivo
                     if os.path.exists(actual_filename):
                         with open(actual_filename, "rb") as file:
                             st.download_button(
                                 label="💾 Salvar no Dispositivo",
                                 data=file,
-                                file_name=f"{video_title}.{'mp3' if format_option == 'Áudio (MP3)' else 'mp4'}",
-                                mime=(
-                                    "audio/mpeg"
-                                    if format_option == "Áudio (MP3)"
-                                    else "video/mp4"
-                                ),
+                                file_name=f"download.{'mp3' if format_option == 'Áudio (MP3)' else 'mp4'}",
+                                mime="audio/mpeg" if format_option == "Áudio (MP3)" else "video/mp4"
                             )
-                        os.remove(actual_filename)  # Limpa o servidor
-
-                        # Limpa o arquivo de cookies temporário por segurança
+                        os.remove(actual_filename)
                         if current_cookie_file == "temp_cookies.txt":
                             os.remove(current_cookie_file)
 
     except Exception as e:
-        st.error(
-            f"Erro: O site bloqueou o acesso ou o link é inválido. Detalhe: {str(e)}"
-        )
+        st.error(f"Erro detectado: {str(e)}")
+
